@@ -1,0 +1,103 @@
+<div
+  *ngIf="examData"
+  class="max-w-2xl p-3 mx-auto my-4 bg-gray-600 rounded-lg shadow-2xl animate-right-bounce text-shadow-sm"
+>
+  <div class="flex justify-center">
+    <h3 class="mb-3 text-lg font-bold text-white font-zabal text-shadow">
+      {{ examData.material.topic }}
+    </h3>
+  </div>
+  <div class="flex justify-between">
+    <p class="font-zabal text-slate-300 self-end text-shadow">Summary</p>
+    <button
+      class="text-sm font-semibold text-red-600 hover:text-white text-shadow hover:font-bold hover:text-base transition-all duration-300 ease-in-out"
+      (click)="showOrHideDelete()"
+      >
+      delete material test
+    </button>
+  </div>
+  <p class="text-xs text-gray-300 line-clamp-3 text-shadow-sm">
+    {{ examData.material.content }}
+  </p>
+  <button
+    (click)="showOrHideContent()"
+    class="self-start text-sm text-blue-500 underline cursor-pointer text-shadow"
+  >
+    Show Content
+  </button>
+
+  <div
+    (click)="showOrHideAnswers()"
+    [ngClass]="wrongAnswers.length > 0 ? 'cursor-pointer' : 'cursor-auto'"
+    class="p-3 my-3 transition-colors duration-300 ease-in-out bg-gray-400 rounded-lg shadow-2xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+  >
+    <div>
+      <div class="flex items-center justify-between w-full">
+        <h4
+          [ngClass]="
+            examData.questions.length! <= examData.userAnswers.length
+              ? 'text-green-400 hover:text-green-500 hover:text-shadow-white'
+              : 'text-red-700 hover:text-red-800 hover:text-shadow-white'
+          "
+          class="text-base font-semibold text-shadow"
+        >
+          Exam
+          {{
+            examData.questions.length <= examData.userAnswers.length
+              ? "Completed"
+              : "Not Completed"
+          }}
+        </h4>
+        <div
+          class="flex items-center justify-center w-12 h-12 rounded-full shadow-lg bg-slate-300 hover:scale-105 hover:bg-slate-400"
+        >
+          <p
+            class="m-0 leading-none text-center text-slate-700 font-zabal textshadow"
+          >
+            {{ getCorrectAnswersPercentage() }}%
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      [ngStyle]="{
+        'max-height': answerVisible ? '1000px' : '0px',
+        overflow: 'hidden'
+      }"
+      class="transition-all duration-1000 ease-in-out cursor-auto"
+    >
+      <div
+        *ngIf="wrongAnswers.length > 0"
+        class="flex-row-reverse items-center justify-between mt-2 md:flex"
+      >
+        <button
+          (click)="navigateToExam()"
+          class="px-2 py-1 transition-colors duration-300 ease-in-out bg-gray-700 border rounded-lg shadow-2xl text-stone-200 hover:bg-gray-800"
+        >
+          Retry Wrong Answers
+        </button>
+        <p class="text-stone-200">Questions you got wrong:</p>
+      </div>
+      <div
+        *ngFor="let question of wrongAnswers"
+        class="p-2 my-1 transition-colors duration-300 ease-in-out bg-gray-500 border rounded-md cursor-default hover:bg-gray-400 text-stone-200 hover:text-stone-300"
+      >
+        {{ question.questionIndex }} )
+        {{ question.question.text }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-delete-dialog
+  [showContent]="deleteVisable"
+  (contentVisibilityChanged)="handleDeleteVisibilityChange($event)"
+>
+</app-delete-dialog>
+
+<app-content-dialog
+  [material]="examData?.material!"
+  [showContent]="contentVisable"
+  (contentVisibilityChanged)="handleVisibilityChange($event)"
+></app-content-dialog>

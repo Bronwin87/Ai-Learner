@@ -1,0 +1,22 @@
+<div id="examComponent" class="justify-center p-4 mx-auto lg:mx-7 bg-slate-400 rounded-2xl fade-in-scale-up" [class.active]="animationActive">
+  <div *ngIf="(examData?.questions?.length!) > currentQuestionIndex - 1">
+    <div class="w-full rounded-full h-2.5 bg-gray-700">
+      <div
+        class="bg-blue-600 h-2.5 mb-1 rounded-full"
+        [style.width]="
+          (currentQuestionIndex / (examData?.questions?.length ?? 1)) * 100 +
+          '%'
+        "
+      ></div>
+    </div>
+    
+      <app-question class="question-animation"
+      *ngIf="currentQuestionIndex - 1 < (examData?.questions?.length!)"
+      [attr.key]="examData?.questions![currentQuestionIndex - 1]!.question.id"
+      [question]="examData?.questions![currentQuestionIndex - 1]!.question"
+      [answers]="examData?.questions![currentQuestionIndex - 1]!.answers"
+      (answerSelected)="handleAnswerSelection($event)"
+      >
+    </app-question>
+  </div>
+</div>

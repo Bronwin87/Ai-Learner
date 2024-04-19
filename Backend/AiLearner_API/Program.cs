@@ -11,6 +11,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.Resource;
 
 
 namespace AiLearner_API
@@ -20,6 +23,13 @@ namespace AiLearner_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+            builder.Services.AddApplicationInsightsTelemetry();
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+            builder.Services.AddAuthorization();
 
             // Add services to the container.
             //Add DbContext
@@ -41,26 +51,26 @@ namespace AiLearner_API
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddScoped<CachingService>();
             builder.Services.AddSingleton<OpenAIService>();
-          //
-          // builder.Services.AddAuthentication(options =>
-          // {
-          //     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-          //     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-          // 
-          // })
-          // .AddJwtBearer(options =>
-          // {
-          //     options.TokenValidationParameters = new TokenValidationParameters
-          //     {
-          //         ValidateIssuerSigningKey = true,
-          //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-          //         ValidateIssuer = true,
-          //         ValidateAudience = true,
-          //         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-          //         ValidAudience = builder.Configuration["Jwt:Audience"],
-          //         ClockSkew = TimeSpan.Zero
-          //     };
-          // });
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")!)),
+                    ValidateIssuer = true,
+                    ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
+                    ValidateAudience = true,
+                    ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
 
             builder.Services.ConfigureApplicationCookie(options =>
             {
@@ -73,7 +83,12 @@ namespace AiLearner_API
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowMyOrigin",
-                    builder => builder.WithOrigins("http://localhost:4200")
+                    builder => builder.WithOrigins(
+                        "http://localhost:4200",
+                        "https://localhost:4200",
+                        "https://c76rjpx5.euw.devtunnels.ms:4200",
+                        "https://c76rjpx5-4200.euw.devtunnels.ms"
+                        )
                                         .AllowAnyMethod()
                                         .AllowAnyHeader()
                                         .AllowCredentials());
@@ -128,25 +143,37 @@ namespace AiLearner_API
 
             var app = builder.Build();
 
+            app.Use(async (context, next) =>
+            {
+                var token = context.Request.Cookies["AccessToken"];
+                if (!string.IsNullOrEmpty(token) && !context.Request.Headers.ContainsKey("Authorization"))
+                {
+                    context.Request.Headers.Append("Authorization", $"Bearer {token}");
+                }
+                await next.Invoke();
+            });
 
             app.UseCors("AllowMyOrigin");
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
+            //if (app.Environment.IsDevelopment())
+            //{
 
-            }
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                });
+            //}
+            //);
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            });
 
             /**/
             //Add my ExceptionMiddleware
             app.UseMiddleware<ExceptionMiddleware>();
 
-            app.MapGet("/test",() => "Hello World!");
+            var scopeRequiredByApi = app.Configuration["AzureAd:Scopes"];
+
+            app.MapGet("/test", (HttpContext httpContext) => Results.StatusCode(StatusCodes.Status200OK));
 
             /**/
             app.UseHttpsRedirection();

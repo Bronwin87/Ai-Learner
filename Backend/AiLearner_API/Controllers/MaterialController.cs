@@ -55,6 +55,7 @@ namespace AiLearner_API.Controllers
             {
                 // Call the OpenAI service to generate a study material
                 var res = await _openAIService.CallChatGPTAsync(requestDto.Content, requestDto.NumOfQuestions);
+                var test = await _openAIService.GetLMStudioResponse(requestDto.Content, requestDto.NumOfQuestions);
                 if (res == null)
                     continue;
 

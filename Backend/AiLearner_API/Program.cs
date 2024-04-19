@@ -24,7 +24,7 @@ namespace AiLearner_API
             // Add services to the container.
             //Add DbContext
             builder.Services.AddDbContext<AiLearnerDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("AiLearnerConnection")));
+                options.UseSqlServer("Data Source=localhost\\SQLEXPRESS;Database=ailearner;Integrated Security=True;Trust Server Certificate=True"));
 
 
             //Add interfaces and their implementations
@@ -41,26 +41,26 @@ namespace AiLearner_API
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddScoped<CachingService>();
             builder.Services.AddSingleton<OpenAIService>();
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
+          //
+          // builder.Services.AddAuthentication(options =>
+          // {
+          //     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+          //     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+          // 
+          // })
+          // .AddJwtBearer(options =>
+          // {
+          //     options.TokenValidationParameters = new TokenValidationParameters
+          //     {
+          //         ValidateIssuerSigningKey = true,
+          //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+          //         ValidateIssuer = true,
+          //         ValidateAudience = true,
+          //         ValidIssuer = builder.Configuration["Jwt:Issuer"],
+          //         ValidAudience = builder.Configuration["Jwt:Audience"],
+          //         ClockSkew = TimeSpan.Zero
+          //     };
+          // });
 
             builder.Services.ConfigureApplicationCookie(options =>
             {
